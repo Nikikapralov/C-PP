@@ -3,7 +3,7 @@
 
 using namespace std;
 
-int main() {
+void calculator() {
     int amount {0};
     const int dollar {100};
     const int quarter {25};

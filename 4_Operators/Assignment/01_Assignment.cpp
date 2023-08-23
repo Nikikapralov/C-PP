@@ -2,7 +2,7 @@
 #include <tuple>
 using namespace std;
 
-void assignment_operator() {
+void assignment() {
     int num1 {13};
     int num2 {0};
     num1 = 5;
