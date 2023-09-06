@@ -84,7 +84,11 @@ To prevent such behaviour but also save space and time by not copying the whole 
 void main(const vector<int> &vec){
 	will throw error if one tries to change data in vector.
 }
-
+without the &, we are creating a copy of str in each iteration. So we replace the value of the copy. If we pass a reference though, it is not
+a copy anymore, but the real item. Saves time and memory from copying each item from the array.
+for (auto &str: string){
+	str = "Funny" - will put each element of the string vector to funny cus you are using the reference.
+}
 
 HOW MEMORY WORKS:
 
@@ -128,7 +132,7 @@ cout << *pointer++  - basically return the dereferenced pointer value and update
 
 POINTER CONSTANTS:
 const int *pointer {&data}; - the data pointed to by the pointer is constant and cannot be change but the pointer itself can move to another data.
-int *const pointer {&data}; - the data pointed to bby the pointer can be changed, but the pointer itself cannot move to another data.
+int *const pointer {&data}; - the data pointed to by the pointer can be changed, but the pointer itself cannot move to another data.
 const int *const pointer {&data}; - neither the data, nor the reference can be changed.
 
 POINTER ARITHMETIC:
@@ -136,6 +140,23 @@ point++ will give us the next element. Same as pointer + 1
 pointer - pointer will give us the amount of items between the 2 pointers.
 pointer == pointer will check addresses 
 *pointer == *pointer will check values
+
+POINTER RETURN FUNCTIONS:
+
+type *function_name(arg, arg)
+
+int *return_pointer_to_biggest(num_1, num_2) - will return a pointer to the biggest num
+
+!!! never return a pointer to a local variable! Once the function terminates, so will the variable! Instead, create a new variable on the HEAP and
+return a pointer to it!
+
+!!! POINTER PITFALLS!
+-	uninitialized pointers are dangerous! Access random data and can corrupt data!
+-   pointers pointing to invalid data. For example a pointer pointing to a long gone local variable. (Use NEW for HEAP!)
+-	having 2 pointers point at the same memory, then releasing one pointer (delete) and trying to access memory with another. Will corrupt data.
+-	not checking if new fails with try/except#
+-	leaking memory - losing pointer to data on HEAP
+
 
 
 
@@ -302,7 +323,140 @@ pointer = new double[size];
 pointer points to the first address in the array. Do not lose it, no other way to access.
 
 
+L AND R VALUES.
 
+L VALUE - has an address and is addressable.
+
+str = 100
+
+str is L Value, its addressable, but 100 is not, its an R value.
+
+WHEN TO USE WHICH IN FUNCTIONS:
+
+- pass by value - value is not modified and parameters are small and efficient to copy. (int, chars)
+- pass by pointer - value is expensive to copy and may be modified (yes to null reference) - the pointer can be a null pointr
+- pass by reference - value is expensive to copy and may be modified (no null reference) - the address is always valid, can never be null
+
+
+CLASSES
+
+create using the class keyword.
+
+class MyClass {
+	(class Attributes)
+public:
+ int attribute_1 {10} (this is public)
+ double attribute_2 {20.0} (this is also public)
+	(class Methods)
+private:
+ void say_hi {cout << hi}; (this is private)
+ void say_bye {cout << bye}; (this is also private)
+
+}
+
+set a class:
+
+MyClass class_1; 
+MyClass *class_2 = new MyClass;
+
+now class_2 is a pointer to the object in the HEAP.
+
+to access the variables use (*class_2).attribute_1 or class_2 -> attribute_1
+
+
+public - can be accessed outside of the class
+private - cannot be viewed or accessed outside of the class
+protected - cannot be viewed/accessed from outside of the class but can be accessed from child classes through inheritance
+
+Specify methods either in the class or as following:
+
+MyClass::method_1(){ 
+	return 1
+};
+
+Consider separating class declaration and implementation in .cpp and .h files.
+
+Use guards:
+#ifndef _MYCLASS_H_
+#define _MYCLASS_H_
+
+#endif
+
+Used to stop double declarations if imported in multiple files.
+
+#include "MyClass.h" use "" for self defined classes.
+
+How to use .h and .cpp files.
+
+Write the declaration in a .h file.
+In a guard:
+#ifndef _MYCLASS_H_
+#define _MYCLASS_H_
+Basically class MyClass {
+	Attributes
+	Method DECLARATIONS ONLY! (Prototypes basically)
+}
+#endif
+
+In a .cpp file write the implementation of the methods:
+#include "MyClass.h"
+voic MyClass::my_method() {
+	return 1
+}
+
+
+#include "MyClass.h" in main or whenever you use the class.
+
+Constructors - Have the class name and are called on class creation.
+
+Can be overloaded!
+Define them where methods are defined.
+MyClass(int attribute_1, int attribute_2)
+MyClass(double attribute_1, double attribute_2) 
+
+Destructors - Have the class name with a ~ in front and are called automatically on class destruction.
+A good place to free up memory that was being held by the class.
+
+~MyClass()
+
+~ is the char on the left of the 1 with + shift.
+
+Default constructor - when no other constructor is provided.
+
+Be careful. As soon as we define a constructor, the default destructor disappears. If we want to define objects with the default constructor,
+we need to define it ourselves. MyClass(){}
+
+Initialisation lists - when using the constructor the usual way, the values are first initialised to some garbage data and then afterwards,
+assigned the data that we pass through the constructor. This is inefficient. Instead, use initialisation lists, that will initialise the variable with
+the passed value and do it together, in one go.
+
+Player::Player(str name, int health) : name(name), health(health){
+
+of course, those values have to be declared as private/public/protected at the top of the class, where attributes are declared.
+	
+}
+
+Delegating constructors - useable only with initialisation lists. Basically it allows you to call a different constructor overload from within
+your constructor in order to reuse code. Basically, the first constructor does all the heavy lifting, constructor delegation allows us to call the first
+constructor with some predefined variables when calling other constructors. 
+
+Player::Player(str name, int health) : name(name), health(health) {
+	Here we can have some more logic or code.
+}
+
+
+Player::Player() : Player {"None", 100} {
+	When the constructor with no arguments is called, the above constructor with args
+	"None" and 100 will be called.
+}
+
+Player::Player(str name) : Player {name, 100) {
+	The first constructor with name = name and health 100 will be called.
+
+}
+
+Important to note. The first constructor calls the second which constructs the object. The program then recursively returns to the first and executes the code in the body of
+that constructor as well.
 
 
 */
