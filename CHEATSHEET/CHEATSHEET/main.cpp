@@ -181,6 +181,10 @@ type array_name[size] where [] is the actual array declaration.
 As such it is normal to see: int array[3] {1, 2, 3}; and string my_strings[2] {"string_1", "string_2"}
 We can also declare an array of chars. 
 
+To dynamically declare arrays, one must use the new keyword. Pointer to new array.
+int* array_pointer = new int [10];
+This has now allocated an array of size 10 on the Heap. Don;t forget to delete it afterwards! delete[] array_pointer
+
 The value of an array is the address of the first element in the array.
 So basically int arr[2] {1, 2};
 arr = the address of arr[0] or the address of 1.
@@ -228,7 +232,7 @@ There are some significant performance differences discussed below (in C, last p
 Peter Schachte
 Originally Answered: Why is ++i more efficient than i++?
 It depends on your compiler and the context. With a good compiler, ++i is only more efficient than i++
-when you don’t really have a choice of which one to use.
+when you donÂ’t really have a choice of which one to use.
 
 With the pre-increment (++i), first i is updated and then it is used. There is no need for two separate values,
 so only one register is needed. With the post-increment, the old value must be retained while i is incremented,
@@ -237,19 +241,19 @@ to notice when the expression is just used for its side-effect, and its value ig
 
 When ++i or i++ is used as a statement (including in the increment part of a for loop), the two are semantically
 identical, and there is no reason for holding on to the old value of i. So in the 1970s or 80s, when C compilers
-were pretty weak, you were better off with ++i than with i++ because it wouldn’t copy the value of i to a different
+were pretty weak, you were better off with ++i than with i++ because it wouldnÂ’t copy the value of i to a different
 register, or possibly to memory, for no reason. Modern compilers (for a couple of decades now) are smart enough to
-recognise that it doesn’t need to save the old value in this case, and will generate the same code for both.
+recognise that it doesnÂ’t need to save the old value in this case, and will generate the same code for both.
 
-When using i++ as an expression, where you really do care about the difference, and assuming you can’t reorganise your code
-so that you can use ++i, the compiler probably won’t be able to reorganise your code either, so although ++i is more efficient
-than i++, you don’t have a choice.
+When using i++ as an expression, where you really do care about the difference, and assuming you canÂ’t reorganise your code
+so that you can use ++i, the compiler probably wonÂ’t be able to reorganise your code either, so although ++i is more efficient
+than i++, you donÂ’t have a choice.
 
 Dmitriy Genzel makes a good point that the difference is much greater in C++ when working with objects,
 where preserving the old value requires copying an object and not just copying a register. Nevertheless,
 knowing what a good job modern C/C++ compilers do, I would be very surprised if they did not optimise the
-case of post-increment used as a statement. It’s a very simple optimisation to always transform post-increments
-to pre-increments when the value is ignored, and I can’t see how post-increment could ever be more efficient that pre-increment.
+case of post-increment used as a statement. ItÂ’s a very simple optimisation to always transform post-increments
+to pre-increments when the value is ignored, and I canÂ’t see how post-increment could ever be more efficient that pre-increment.
 
 
 
