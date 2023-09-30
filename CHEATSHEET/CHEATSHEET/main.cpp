@@ -462,6 +462,33 @@ Player::Player(str name) : Player {name, 100) {
 Important to note. The first constructor calls the second which constructs the object. The program then recursively returns to the first and executes the code in the body of
 that constructor as well.
 
+Using defaults in constructors:
+First define a prototype with the defaults:
+Player::Player(name="Tony"){};
+Then define the actual implementation using initialisation lists:
+Player::Player(name_val) : name(name_val){};
+
+
+COPY CONSTRUCTOR
+
+The copy constructor is used whenever an object has to be copied. It basically takes all class members and copies them. Such a constructor is automatically provided 
+from the compiler.
+When is it being used? Whenever we pass an object as value to a function, return an object from a function or try to copy an object.
+
+Copying an object:
+Object copy_object {old_object}; - This will produce a copy.
+
+Creating a copy constructor:
+
+Object::Object(const Object &source) : first_attribute(source.first_attribute), second_attribute(source.second_attribute) {
+   - const so that we cannot change the source.\
+   - The source is an address so that we have access to the previous object. If it were value, we would call the copy constructor
+   and have an endless recursive loop.
+   - We can use initialisation lists to assign the values immediately or call the constructor through delegation (see above). Just use
+   &source.value for the values.
+   - Be careful when dealing with pointers and addresses. Only the pointer value will be copied, not the data itself. As such, this will 
+   produce a shallow copy!
+}
 
 */
 #include <iostream>;
