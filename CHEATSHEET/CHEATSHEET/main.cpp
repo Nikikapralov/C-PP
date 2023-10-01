@@ -1,5 +1,9 @@
 /*                               C++ CHEATSHEAT                          
-
+FAST C++:
+Try to avoid copying big objects into and out of functions - use addresses and pointers.
+Always implement Move constructor to avoid unnecessary deep copies.
+Use initialisation lists to declare and initialise simultaneously!
+Use inline functions for one time functions to generate assembly code. Not good for repeating funcs!
 
 COMMENTS - /* *\
 IMPORTS - include<iostream>, include"my_personal_header"
@@ -306,7 +310,7 @@ SoC - system on a chip. Most stuff are on the same chip. Pretty good, Phones, Ap
 
 DYNAMIC MEMORY ALLOCATION - at HEAP.
 Easy, just use the keyword "new".
-Basically: *pointer = new int
+Basically: int *pointer = new int; MUST ALWAYS BE A POINTER!  
 Now we have a pointer that points to the new int variable. Unfortunately, it is garbage, so you need to dereference it and set it a new value.
 *pointer = 200. Now that new int has the value of 200. Be careful! If you lose the pointer, you lose access to the value forever. It becomes a
 MEMORY LEAK!!!
@@ -490,12 +494,192 @@ Object::Object(const Object &source) : first_attribute(source.first_attribute), 
    produce a shallow copy!
 }
 
-*/
-#include <iostream>;
-using std::cout;
+DEEP AND SHALLOW COPIES:
 
-void main() {
-	int num{ 10 };
-	int* pointr{&num};
-	cout << *pointr;
+Be extra careful when using addresses and pointers with classes.
+If you pass a pointer to a class, when the class is copied, that pointer will be copied as well BUT NOT the value that it is pointing to!
+Why is that a problem? Because when the object with the pointer gets out of scope, the memory that was pointed to will be freed, despite
+it still being referenced by other objects! This is called a shallow copy. Always implement deep copies by copying the data when working
+with pointers and classes!
+
+For example - shallow copy:
+class MyClass {
+	MyClass::MyClass (int pointer_to_data){
+		data_pointer = pointer_to_data
+	}
 }
+
+For example - deep copy:
+
+class MyClass {
+	int* new_pointer;
+	MyClass::MyClass (int* pointer_to_data){
+		new_pointer = new int - this creates a new pointer on the heap
+		*new_pointer =  *pointer_to_data - this sets the data from the new_pointer to the data from pointer_to_data creating a deep copy.
+	}
+}
+Alternatively, in the copy constructor:
+
+MyClass::MyClass (const MyClass &source) {
+	new_pointer = new int;
+	*new_pointer = *source.new_pointer;
+	
+}
+
+//class MyClass {
+//	public:
+//		int *data;
+//
+//	MyClass(int* pointer) {
+//		data = pointer;
+//	};
+//
+//	MyClass(const MyClass& source) {
+//		data = source.data;
+//	};
+//
+//};
+//
+//
+//void main() {
+//	//int value{ 10 };
+//	//int* pointer{ &value };
+//	//MyClass first = MyClass(pointer);
+//	//cout << first.data << std::endl;
+//	//MyClass second = test_func(first);
+//	//cout << second.data << std::endl;
+//}
+
+// - This code will produce an error since a shallow copy will be used and the memory will be freed.
+
+// - To fix, use deep copy:
+
+//#include <iostream>;
+//using std::cout;
+//
+//class MyClass {
+//	public:
+//		int* data;
+//
+//		MyClass(int* pointer_to_data) {
+//			data = new int;
+//			*data = *pointer_to_data;
+//		};
+//};
+//
+//MyClass test_func(MyClass first) {
+//	return first;
+//};
+//
+//void main() {
+//	int value{ 10 };
+//	int* pointer{ &value };
+//	MyClass first = MyClass(pointer);
+//	cout <<  first.data << std::endl;
+//	MyClass second = test_func(first);
+//	cout <<	 second.data << std::endl;
+//	cout << &first.data << std::endl;
+//	cout << &second.data << std::endl;
+//	cout << *first.data << std::endl;
+//	cout << *second.data << std::endl;
+//}
+
+
+DONT FORGET TO IMPLEMENT THE DESTRUCTOR AND REMOVE THE OBJECTS FROM THE HEAP! MEMORY LEAK!!!!
+
+
+However, copying objects can be a significant performance bottleneck! The problem gets even higher if we have to
+do deepcopies as well. As such, as of c++ 11, we can use the Move constructor:
+
+Copy elision - Return Value Optimisation - compiler technique to remove unnecessary copying.
+
+MOVE CONSTRUCTOR:
+
+The move constructor is as simple as it is complicated. Even though such a statement may puzzle you at first,
+take a look at what I mean:
+
+First, we need to remember what are L and R values. Now R values do not have a specific reference, so to say. They are 200, 100, Class(20), 
+one time created values, stored in a collection maybe, that cannot be accessed except through the collection.
+Vector(1, 2, 3, 4, 5) - all of them are R values. Now, assume we have to push all of those values in the vector. Well to do it, we
+use a function that takes this R value, copies it and then stores the copy in the vector. Moreover, as the vector increases in size, it has to
+move - recopy - its contents. That can end up being a significant performance hog! As such, implementing a Move constructor is a good idea.
+It takes the reference of the R value, creates a new R value but does not copy the pointers, instead it sets the data to the new object and 
+sets the old object pointer to a nullpointr. That prevents all of the deepcopies and achieves the same result with very good performance gains.
+
+To access the address of an R value, use &&.
+MyClass::MyClass (MyClass &&source) {
+	data = source.data;
+	source.data = nullpointr;
+}
+	
+.THIS POINTER:
+
+The this pointer is equivalent to the python self keyword. You can skip them in the class since the compiler is smart enough to know what
+you want. If you want to have the same variable names though, you CANNOT skip it.
+
+this -> balance = balance
+
+return this - returns pointer to the object
+return *this - dereference - returns a copy of the object
+
+
+CONST CORRECTNESS:
+Working with const classes in C++ is a little weird.
+You declare a class as const and declare a getter method for its private attributes.
+All is fine, no harm done right? So you try to access the getter method. BAM! Error! Why?
+Well, the compiler has no idea this is a getter method so of course, it just forbids everything.
+To tell the compiler this method won't modify anything, do the following:
+
+My Class {
+	private:
+		int age;
+	public:
+		int get_age() const {
+			return age;
+		}
+
+}
+
+Add const after the method that you want to mark as non changing. This will allow the compiler to run it.
+
+
+STATIC MEMBERS:
+Static members of a class are basically attributes that can be described as global and shared between all instances.
+For example, a counter of how many instances of a class are currently created. Static members can be accessed by static
+functions, which cannot access other members of the class.
+
+Just put the static keyword in front of the variable/method.
+
+static int age;
+static int get_age(){};
+
+Declare the static members in the .h header file. Then in the .cpp file, instantiate them.
+For example, in the .cpp file, set the amount of created instances to 0 like that:
+int Player::instances {0};. Then in the Constructor and Destructor increment and decrement the count
+accordingly.
+
+STRUCT VS CLASS:
+Structs are a relic of the C language. Basically used to hold data. They have NO methods and 
+all of the data is public.
+
+Classes can have methods and some of the data may be private.
+
+FRIENDS:
+A class can have designate a function or another class as their friend and as such, this function or 
+class will get access to all private members.
+
+Declare friends at the top of the class, where you also declare the other variables. For example:
+
+class MyClass {
+	friend void display_class(MyClass &my_class_address){}; - only this function has access to all private variables
+	friend void Person::speak(MyClass &my_class_address){}; - only this method has access to all private variables
+	friend class Other_class; - all methods of this class have access to MyClass private attributes
+	private:
+		int age;
+		string private_variable;
+}
+
+void display_class(MyClass &my_class_address){ cout << my_class_address.private_variable } 
+
+
+*/
