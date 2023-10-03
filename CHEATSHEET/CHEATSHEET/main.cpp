@@ -565,6 +565,8 @@ MyClass::MyClass (const MyClass &source) {
 //			data = new int;
 //			*data = *pointer_to_data;
 //		};
+
+	deallocate when using destructor.
 //};
 //
 //MyClass test_func(MyClass first) {
@@ -594,6 +596,16 @@ do deepcopies as well. As such, as of c++ 11, we can use the Move constructor:
 Copy elision - Return Value Optimisation - compiler technique to remove unnecessary copying.
 
 MOVE CONSTRUCTOR:
+First, what is the problem? We inject an object into a function, that object gets copied with all its pointers values (shallow copy).
+When the function returns, the first object is copied and the copy is returned, then the first object is deleted.
+Now the copy has an pointer that points to data that has been deleted from first object. Trying to access this data will result in an error.
+To fix this, we do deep copies where we create a new pointer and copy the data to a new memory address. As such when the first object gets deleted,
+the copy has the data in a new memory address. That is time consuming. When doing it with R values, we have to continue deep copying classes that 
+we were never going to use anyway. So what we do is we move the data, since we don't care about copying it and accessing it later. 
+We set the pointer of the R value to the new object and we then nullpointr it. That means than when it gets garbage collected, 
+it won't free the memory in the pointer because it isn't pointing anywhere! Now of course that means that we can no longer access source.data from
+the R value, but we were never going to anyway. This was just temporary so that we can skip the tedious process of copying everything. We just move it.
+
 
 The move constructor is as simple as it is complicated. Even though such a statement may puzzle you at first,
 take a look at what I mean:
@@ -680,6 +692,112 @@ class MyClass {
 }
 
 void display_class(MyClass &my_class_address){ cout << my_class_address.private_variable } 
+
+OPERATOR OVERLOADING:
+
+Operators like +, *, /, - etc can be overloaded to do whatever the programmer wishes them to do for that specific class.
+Basically the equivalent of magic methods in Python.
+
+MyClass one {Variable};
+MyClass two = one - this is a copy operator. Same as MyClass two {one}; This is copying.
+two = one - this is ASSIGNMENT and NOT copying.
+
+*Check for if class is same:
+* if (this == &class_to_compare_with) - basically check if the pointer value address of this class is the same as the 
+* address to the class we are comparing with. If yes, we have same class.
+
+OVERLOADING THE ASSIGNMENT OPERATOR - COPY - Assignment will now copy.
+MyClass &operator=(const MyClass &right_hand_side){}; - this in .H file.
+MyClass &MyClass::operator=(const MyClass &right_hand_side){ function body } - this in .CPP file.
+
+(Return an address since an address is "a pointer to an existing object that cannot be Null" - Carl.)
+
+
+
+B = A
+
+Make sure we are not assigning to ourselves.
+Deallocate the memory that was taken by the variables of B. (this is not creation, B already exists). (ABSOLUTELY ALWAYS DEALLOCATE MEMORY FROM THE HEAP!)
+Deep Copy all memory from A to the variables of B.
+Return B address.
+
+OVERLOADING THE ASSIGNMENT OPERATOR - MOVE - Assignment will now move. Works with R values.
+
+MyString s1;
+s1 = MyString{"Frank"} - this is an R value, used constructed only once and then discarded.
+
+MyClass &MyClass::operator=(MyClass &&right_hand_side) { function body }
+
+- check if we are assigning to ourselves.
+- delete any pointer variables of left_hand_side
+- move pointer from right_hand_side to left_hand_side
+- null the pointer on the right_hand_side so when it gets garbage collected, it doesn't free the memory its pointing to and the data with it.
+
+MEMBER FUNCTION OVERLOADING:
+Translates to A.add(B). Now it is required for A to be before B if B doesn't implement the overload.
+C = A + 10 will work.
+C = 10 + A will NOT work since 10.add(A) - 10 doesn't have the implementation for class A. 
+
+NON MEMBER FUNCTION OVERLOADING:
+Fixes the above ordering problem.
+
+ReturnType operator+(const Type &left, const Type &right).
+
+In order to have access to private members of left and right,
+both left and right have to define the global overload function as a friend.
+
+Supposedly the preferred way to code overloading, but oh my, I hate it.
+Implement them in the MyClass.cpp file. Declare in the MyClass.h file as friends.
+
+OVERLOADING THE STREAM INSERTION AND EXTRACTION OPERATORS << AND >> :
+https://www.geeksforgeeks.org/overloading-stream-insertion-operators-c/
+
+#include <iostream>
+using namespace std;
+
+class Complex
+{
+private:
+	int real, imag;
+public:
+	Complex(int r = 0, int i =0)
+	{ real = r; imag = i; }
+	friend ostream & operator << (ostream &out, const Complex &c);
+	friend istream & operator >> (istream &in, Complex &c);
+};
+
+ostream & operator << (ostream &out, const Complex &c)
+{
+	out << c.real;
+	out << "+i" << c.imag << endl;
+	return out;
+}
+
+istream & operator >> (istream &in, Complex &c)
+{
+	cout << "Enter Real Part ";
+	in >> c.real;
+	cout << "Enter Imaginary Part ";
+	in >> c.imag;
+	return in;
+}
+
+int main()
+{
+Complex c1;
+cin >> c1;
+cout << "The complex object is ";
+cout << c1;
+return 0;
+}
+
+
+
+
+
+
+
+
 
 
 */
