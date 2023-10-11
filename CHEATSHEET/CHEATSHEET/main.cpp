@@ -792,7 +792,9 @@ return 0;
 }
 
 
-
+bool Money::operator==(const Money& right_hand_side) const  - the const after the function
+means that the this.object will not be changed, it is const qualified. Available only on 
+member functions, not global ones.
 
 
 
