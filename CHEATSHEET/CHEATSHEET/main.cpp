@@ -796,6 +796,12 @@ bool Money::operator==(const Money& right_hand_side) const  - the const after th
 means that the this.object will not be changed, it is const qualified. Available only on 
 member functions, not global ones.
 
+Rule of five
+Because the presence of a user-defined (or = default or = delete declared) destructor,
+copy-constructor, or copy-assignment operator prevents implicit definition of the move constructor
+and the move assignment operator, any class for which move semantics are desirable,
+has to declare all five special member functions.
+
 
 
 
