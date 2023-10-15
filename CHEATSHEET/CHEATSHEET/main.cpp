@@ -4,6 +4,7 @@ Try to avoid copying big objects into and out of functions - use addresses and p
 Always implement Move constructor to avoid unnecessary deep copies.
 Use initialisation lists to declare and initialise simultaneously!
 Use inline functions for one time functions to generate assembly code. Not good for repeating funcs!
+Use constexpr do define items that can be evaluated at compile time and don't have to be computed at run time!
 
 COMMENTS - /* *\
 IMPORTS - include<iostream>, include"my_personal_header"
@@ -833,6 +834,22 @@ This will now call the Base{x} constructor.
 
 You can also redefine existing methods in the derived class. See above for more info.
 
+CONSTEXPR:
+constexpr is a feature added in C++ 11. The main idea is a performance improvement of programs by doing computations at compile time rather than run time.
+(GEEKS for GEEKS)
+// C++ program to demonstrate constexpr function for product
+// of two numbers. By specifying constexpr, we suggest
+// compiler to evaluate value at compile time
+#include <iostream>
+ 
+constexpr int product(int x, int y) { return (x * y); }
+ 
+int main()
+{
+    constexpr int x = product(10, 20);
+    std::cout << x;
+    return 0;
+}
 
 
 */
