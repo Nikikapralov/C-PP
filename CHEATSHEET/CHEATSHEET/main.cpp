@@ -803,8 +803,29 @@ and the move assignment operator, any class for which move semantics are desirab
 has to declare all five special member functions.
 
 
+INHERITANCE:
 
+There are 3 types of inheritance. Public, private and protected. Public inheritance is an "is-A" type.
+To inherit, do:
 
+class Derived: public Base {
+}
+
+Now the way that constructors and destructors work:
+
+Derived constructor
+Base constructor
+Base destructor
+Derived destructor
+
+Now if we have multiple overloads in Derived and in Base and we call an overloaded constructor in Derived,
+the base constructor in Base will be called unless otherwise specified.
+
+For example with initialisation lists:
+
+Derived::Derived(int value) : Base{x}, value_double{value * 2} {};
+
+This will now call the Base{x} constructor.
 
 
 
