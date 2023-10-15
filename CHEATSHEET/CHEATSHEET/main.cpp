@@ -809,6 +809,11 @@ There are 3 types of inheritance. Public, private and protected. Public inherita
 To inherit, do:
 
 class Derived: public Base {
+	public:
+ 		void say_hello(){
+   			says hello
+      			Base::say_hello() - invoke the method of Base.
+		}
 }
 
 Now the way that constructors and destructors work:
@@ -826,7 +831,7 @@ Derived::Derived(int value) : Base{x}, value_double{value * 2} {};
 
 This will now call the Base{x} constructor.
 
-
+You can also redefine existing methods in the derived class. See above for more info.
 
 
 
