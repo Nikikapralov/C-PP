@@ -678,7 +678,7 @@ all of the data is public.
 Classes can have methods and some of the data may be private.
 
 FRIENDS:
-A class can have designate a function or another class as their friend and as such, this function or 
+A class can designate a function or another class as their friend and as such, this function or 
 class will get access to all private members.
 
 Declare friends at the top of the class, where you also declare the other variables. For example:
@@ -850,6 +850,66 @@ int main()
     std::cout << x;
     return 0;
 }
+
+POLYMORPHISM:
+
+Static Binding:
+
+Normal methods in inherited classes - They use STATIC BINDING, meaning that they are compile time functions.
+For example:
+Account *p = Trust()
+p.withdraw will now call Account::withdraw because it sees its of type Account.
+
+Static Binding is defined on compile time and prevents us from using polymorphism optimally.
+
+Dynamic Binding:
+
+To correct that, we can use virtual functions - DYNAMIC BINDING - run time functions.
+Dynamic Binding works only with pointers and with objects at the Heap or with references and objects at the Stack. The pointer has to point to the
+Base class.
+So you will have to do Base *p = new Derived();
+Otherwise you will get static binding.
+
+Declare a function (method) as a virtual:
+
+virtual void method_1(){};
+
+You always need a virtual destructor if you have virtual functions. If you provide a virtual destructor in the Base class,
+then all Derived classes inherit the virtual destructor and don't need to define it. Otherwise, on delete, you will call the 
+Base destructor which may leave some memory leaks behind. It is also classified as undefined behaviour.
+
+Use reference functions to call methods of dynamically bounded classes or pointer functions.
+!!!ALWAYS WORK WITH REFERENCES/POINTERS WITH VIRTUAL FUNCTIONS AND DYNAMIC BINDING!!!
+void func (Account &account){
+	account.withdraw()
+}
+
+Override:
+
+Overriding is dynamically bound, while redefinition is statically bound.
+Functions on Base and Derived must be exactly the same. If they are not, then that will be considered as redefinition and
+not override, leading to hard to find errors.
+
+To fix it, use override specifier.
+
+virtual void method_1() const override{} - use on the Derived class to specify that this function overrides the Base class version.
+
+Final:
+
+Prevents a class from being derived from.
+Prevents a method from being overriden.
+
+
+class MyClass final {}
+virtual void do_something () final {}
+
+Pure virtual classes:
+- Used to define abstract classes. (templates that have no instances)
+- Need at least one pure virtual function
+
+void virtual draw () = 0; (Prototype) - just the template. No implementation. That is a pure virtual function.
+
+If you don't override the pure virtual function in the derived class, they are also considered abstract classes.
 
 
 */
