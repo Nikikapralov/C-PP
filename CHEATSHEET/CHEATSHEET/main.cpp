@@ -915,6 +915,8 @@ SMART POINTERS:
 #include<memory>
 
 Pointer arithmetic is unfortunately not supported within smart pointers.
+Automatically take care for new and deletion.
+Use the HEAP.
 
 Using smart pointers:
 std::smart_pointer<My_class> var_poitner_name = ...
@@ -924,7 +926,7 @@ var_pointer_name -> method()
 RAII - Resource Acquisition is Initialisation
 Resource is acquired and initialised in object constructor and released in the destructor.
 
-UNIQUE_POINTER:
+UNIQUE_POINTER: HEAP
 unique_ptr - Only one pointer pointing to an object on the HEAP, no copy or assignment but move is there. When pointer is destroyed,
 whatever it was pointing to is destroyed as well.
 std::unique_ptr<int> pointer {10};
@@ -932,6 +934,64 @@ pointer.get() - returns a raw pointer.
 pointer.reset() - frees memory, deletes object.
 if (pointer) - checks if it exists (not reset)
 
+vector.push_back(pointer) will not work because copy is not allowed (unique_ptr).
+Instead use vector.push_back(std::move(pointer)) to change ownership of the pointer.
+std::make_unique() - can be used to initialise a unique pointer.
+
+std::unique_ptr<int> my_int = std::make_unique<int>(100)
+std::unique_ptr<Class> my_class = std::make_unique<Class>(arg1, arg2, arg3)
+auto my_something = std::make_unique<Class>(arg1, arg2, arg3) - will deduce the type automatically.
+
+If you want to reassign a unique pointer (pointer_new = pointer), use the std::move() function as described above.
+After we move pointer to pointer_new, pointer will be a nullptr and will return false on if (pointer):
+
+WE CANNOT COPY UNIQUE POINTERS IN ANY WAY! IF YOU PASS A UNIQUE POINTER TO A FUNCTION OR A FOR LOOP, IT HAS TO BE 
+THROUGH A REFERENCE! CONST REFERENCE MOST OFTEN THAN NOT!
+
+SHARED_POINTER: HEAP
+shared_ptr - Many pointers can point to an object on the HEAP, copy, assignment and movee are allowed. When no pointer is pointing
+to the object, that object is destroyed.
+Does NOT support managing arrays.
+
+std::shared_ptr<int> pointer {10};
+pointer.use_count(); - displays the amount of currently active references.
+pointer.reset(); - will set pointer to nullpointr and do -1 on the shared_ptr reference.
+std::make_shared() - same as make unique 
+Since copy is allowed, we do not need to use references.
+
+If you use a vector with vector.push_back(pointer), you create a copy of the pointer and push it back into the vector.
+When the vector is destroyed, the copied pointer is destroyed is as well, but the object is not! This is unlike the usage
+with unique_ptr.
+
+WEAK_POINTER: HEAP
+weak_ptr - does not OWN the object.
+Is always created from shared pointers but does not increment the reference counter.
+They prevent circular reference that ultimately prevents HEAP deallocation.
+
+A (b) <---> B(a)
+A has a shared pointer to B and B has a shared pointer to A.
+Now what ultimately happens is that when A and B are requested for deletion, A points to B and B points to A, references stay at 1
+and deletion of the objects is not performed, only the pointers on the stack. Memory leak.
+Weak pointers solve this problem.
+
+Use make_shared(), no make_weak(). 
+Use when we have to traverse graphs and multiple objects that may end up having a circular reference. (A doubly linked list for example)
+
+CUSTOM DELETERS:
+Cannot use make_unique/make_shared since we need to provide our custom deleter.
+Custom deleters are called on pointer cleanup.
+
+void my_deleter(Class *pointer){
+	some other stuff
+	delete pointer;
+}
+
+std::unique<Class> my_class_pointer {new Class{}, my_deleter} - pass the deleter as a function argument.
+
+USE:
+1. Unique pointers first.
+2. Shared pointers if unique pointers do not work for this implementation.
+3. Weak pointers if shared pointers create strong circular references. A points to B and B points to A. (Doubly linked list).
 
 
 
