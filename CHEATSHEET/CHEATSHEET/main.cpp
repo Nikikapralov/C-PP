@@ -911,5 +911,29 @@ void virtual draw () = 0; (Prototype) - just the template. No implementation. Th
 
 If you don't override the pure virtual function in the derived class, they are also considered abstract classes.
 
+SMART POINTERS:
+#include<memory>
+
+Pointer arithmetic is unfortunately not supported within smart pointers.
+
+Using smart pointers:
+std::smart_pointer<My_class> var_poitner_name = ...
+var_pointer_name -> method()
+*var_pointer_name - dereference.
+
+RAII - Resource Acquisition is Initialisation
+Resource is acquired and initialised in object constructor and released in the destructor.
+
+UNIQUE_POINTER:
+unique_ptr - Only one pointer pointing to an object on the HEAP, no copy or assignment but move is there. When pointer is destroyed,
+whatever it was pointing to is destroyed as well.
+std::unique_ptr<int> pointer {10};
+pointer.get() - returns a raw pointer.
+pointer.reset() - frees memory, deletes object.
+if (pointer) - checks if it exists (not reset)
+
+
+
+
 
 */
