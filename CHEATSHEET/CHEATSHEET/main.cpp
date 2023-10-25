@@ -993,7 +993,47 @@ USE:
 2. Shared pointers if unique pointers do not work for this implementation.
 3. Weak pointers if shared pointers create strong circular references. A points to B and B points to A. (Doubly linked list).
 
+EXCEPTION HANDLING:
 
+DO NOT THROW EXCEPTIONS IN DESTRUCTORS!
 
+noexcept - states when the function will definitely not throw any exceptions.
+
+Basically the same exception handling as in other languages.
+
+class MyException {
+	public:
+ 		MyException() = default; - constructor
+   		~MyExcetpion() = default; - destructor
+     }
+
+throw MyException{}; - instance of MyException.
+throw 0;
+
+try {}
+
+catch(const MyException &exception)
+{
+exception.what() - string error representation if std::exception is inherited.
+}
+
+To handle multiple exception, do multiple catch() es.
+
+catch(const int &exception)
+catch(const std::string &exception)
+
+std::exception - STD Exception library.
+The exception.what() method returns a string of the error.
+To use the .what() method, override:
+virtual const char *what() const noexcept;
+
+class MyException public std::exception {
+	public:
+ 		MyException() = default; - constructor
+   		~MyExcetpion() = default; - destructor
+     		virtual const char *what() const noexcept {
+       			return "MyExcetption string"
+		}
+     }
 
 */
