@@ -1063,7 +1063,7 @@ class MyClass {
 MyClass<int, 2>(100)
 
 CONTAINERS:
-Array, Vector, Map, Set
+Array, Vector, Map, Set, List- (doubly linked list)
 
 ITERATORS: - used to iterate through collections. The for range loop is implemented by an iterator. To be used when the for range loop cannot be used and a custom iterator is needed.
 Iterators are very near to poiters, can be dereferenced.
@@ -1080,6 +1080,15 @@ reverse - rbegin, rend
 const_reverse - crbegin, crend
 
 end is after the last element of the iterator.
+
+ALGORITHMS:
+#include<algorithms>
+
+std::find - basically if N in vector<std::string> {A, B, C, D, N} either finds it or returns v.end()
+To check, do if result == std::end(vector)
+
+
+
 
 
 
