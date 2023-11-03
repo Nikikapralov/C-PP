@@ -1,5 +1,6 @@
 /*                               C++ CHEATSHEAT                          
 FAST C++:
+Use ++I so that you do not store and create a copy inside the memory register, but just increment the value.
 Try to avoid copying big objects into and out of functions - use addresses and pointers.
 Always implement Move constructor to avoid unnecessary deep copies.
 Use initialisation lists to declare and initialise simultaneously!
