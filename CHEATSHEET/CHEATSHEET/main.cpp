@@ -5,6 +5,7 @@ Always implement Move constructor to avoid unnecessary deep copies.
 Use initialisation lists to declare and initialise simultaneously!
 Use inline functions for one time functions to generate assembly code. Not good for repeating funcs!
 Use constexpr do define items that can be evaluated at compile time and don't have to be computed at run time!
+Template <int N> - create structures at compile time. (maybe)
 
 COMMENTS - /* *\
 IMPORTS - include<iostream>, include"my_personal_header"
@@ -1035,5 +1036,50 @@ class MyException public std::exception {
        			return "MyExcetption string"
 		}
      }
+
+STL: A set of libraries that provide useful classes and algorithms.
+
+MACROS: (BEWARE - OLD - USE TEMPLATES) #define max_size 100 (preprocessor sets those variables and it doesn't know C++, it just replaces. VERY error prone.)
+
+FUNCTION TEMPLATES: - happens at compile time!
+
+template<typename T> or template<class T> or template<typename T1, typename T2>
+T my_func(T value) {
+	return value
+}
+
+my_func<int>(5);
+
+template<int N> - can be used for when the class is known, but we want to pass the value as a template parameter. (For example, when something has to be executed at compile time and not at runtime.)
+
+
+CLASS TEMPLATES: - happen at compile time + implement only in .h files!
+template <typename T, int N>
+class MyClass {
+	T value;
+}	int value_2 {N}; - at compile time, this will become equal to int value_2 {2}; for example
+
+MyClass<int, 2>(100)
+
+CONTAINERS:
+Array, Vector, Map, Set
+
+ITERATORS: - used to iterate through collections. The for range loop is implemented by an iterator. To be used when the for range loop cannot be used and a custom iterator is needed.
+Iterators are very near to poiters, can be dereferenced.
+
+std::vector<int>::iterator it1;
+
+for (auto it = vec.begin(); it != vec.end(); ++it){
+	dereferenced iterator object - *it
+ }
+
+normal - begin, end
+const - cbegin, cend
+reverse - rbegin, rend
+const_reverse - crbegin, crend
+
+end is after the last element of the iterator.
+
+
 
 */
