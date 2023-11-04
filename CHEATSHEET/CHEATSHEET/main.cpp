@@ -7,6 +7,8 @@ Use initialisation lists to declare and initialise simultaneously!
 Use inline functions for one time functions to generate assembly code. Not good for repeating funcs!
 Use constexpr do define items that can be evaluated at compile time and don't have to be computed at run time!
 Template <int N> - create structures at compile time. (maybe)
+Use emplace_back with vectors to create the object inside the vector without unnecessary copies and without moving. Will do an inplace construction.
+
 
 COMMENTS - /* *\
 IMPORTS - include<iostream>, include"my_personal_header"
@@ -1064,8 +1066,14 @@ MyClass<int, 2>(100)
 
 CONTAINERS:
 Array, Vector, Map, Set, List- (doubly linked list)
+https://en.cppreference.com/w/cpp/container
+emplace_back - inplace creation for an object in a vector.
+back_inserter - an iterator to signify the end of the vector at which elements are to be inserter. Use that instead of vector.end(), since using end() has undefined
+behaviour.
+advance - a function to move the iterator. advance(2) will move the iterator 2 spots forwards.
 
-ITERATORS: - used to iterate through collections. The for range loop is implemented by an iterator. To be used when the for range loop cannot be used and a custom iterator is needed.
+ITERATORS: - used to iterate through collections. The for range loop is implemented by an iterator. To be used when the for range loop cannot be
+used and a custom iterator is needed.
 Iterators are very near to poiters, can be dereferenced.
 
 std::vector<int>::iterator it1;
@@ -1086,6 +1094,10 @@ ALGORITHMS:
 
 std::find - basically if N in vector<std::string> {A, B, C, D, N} either finds it or returns v.end()
 To check, do if result == std::end(vector)
+
+Remember to implement custom < and == operators for your objects, since the std::algorithms functions use those 2 operators very often
+to compare and reorder the objects, same with the containers.
+
 
 
 
