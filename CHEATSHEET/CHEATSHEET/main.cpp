@@ -9,6 +9,7 @@ Use constexpr do define items that can be evaluated at compile time and don't ha
 Template <int N> - create structures at compile time. (maybe)
 Use emplace_back with vectors to create the object inside the vector without unnecessary copies and without moving. Will do an inplace construction.
 
+Poco library and JSON header file.
 
 COMMENTS - /* *\
 IMPORTS - include<iostream>, include"my_personal_header"
@@ -1189,6 +1190,14 @@ int main () {
   cout << second::y << '\n';
   return 0;
 }
+
+(I wrote a lof stuff but I didn't save it so...just check the links below, its more or less covered...)
+
+FILE I/O:
+https://www.geeksforgeeks.org/file-handling-c-classes/
+
+String Streams: 
+https://www.geeksforgeeks.org/stringstream-c-applications/
 
 
 */
