@@ -981,7 +981,9 @@ Weak pointers solve this problem.
 Use make_shared(), no make_weak(). 
 Use when we have to traverse graphs and multiple objects that may end up having a circular reference. (A doubly linked list for example)
 
-CUSTOM DELETERS:
+CUSTOM DELETERS: - to be used when we need to delete some allocated resources that are managed by the pointer. For example, a connection can be closed, or a log
+can be written.
+
 Cannot use make_unique/make_shared since we need to provide our custom deleter.
 Custom deleters are called on pointer cleanup.
 
@@ -1098,10 +1100,95 @@ To check, do if result == std::end(vector)
 Remember to implement custom < and == operators for your objects, since the std::algorithms functions use those 2 operators very often
 to compare and reorder the objects, same with the containers.
 
+ENUMERATIONS:
+Used to provide clearer code.
 
+Unscoped enumeration - sometimes creates issues when the names of multiple enumerations intertwine or the values are the same (0 == 0) etc.
+enum Colour int {Green = 1, Red = 2, Blue = 3};
 
+Scoped enumerations - solve the problems of unscoped enumerations. Just use those.
+enum class Colour int {Green = 1, Red = 2, Blue = 3};
 
+int green = int(Colour::Green); - need to be cast if scoped!
 
+Colour my_colour = 2; (this will not be Red). 
+Functions can return Colour, (enums), that way you can be sure that a function will return an integer, but it will in range for the enum.
+Use switch cases so that all cases have equal access time!
+
+underlying_type_t<Colour> - will return the type of Colour.
+
+A cool thing to do is to overload to scope insertion operator (>>) and check if the input is whatever we expected from the user.
+If not, an error can be returned or an Unknown entry can be set with a specific number.
+
+An enum in a class has to provide the whole path - Player::Mode::Attack for example.
+
+Basically, always use scoped enumerations.
+
+NAMESPACES: - used to combat name collisions.
+
+Defining namespaces
+
+namespace myNamespace
+{
+  int a, b;
+}
+These variables can be accessed from within their namespace normally, with their identifier (either a or b), but if accessed from outside the myNamespace namespace they have to be properly qualified with the scope operator ::. This is why your second example is working fine, as you are using MyClass within the namespace that defines it.
+
+Usage
+
+myNamespace::a
+myNamespace::b 
+Using using
+
+#include <iostream>
+using namespace std;
+
+namespace first
+{
+  int x = 5;
+  int y = 10;
+}
+
+namespace second
+{
+  double x = 3.1416;
+  double y = 2.7183;
+}
+
+int main () {
+  using first::x;
+  using second::y;
+  cout << x << '\n';
+  cout << y << '\n';
+  cout << first::y << '\n';
+  cout << second::x << '\n';
+  return 0;
+}
+or
+
+#include <iostream>
+using namespace std;
+
+namespace first
+{
+  int x = 5;
+  int y = 10;
+}
+
+namespace second
+{
+  double x = 3.1416;
+  double y = 2.7183;
+}
+
+int main () {
+  using namespace first;
+  cout << x << '\n';
+  cout << y << '\n';
+  cout << second::x << '\n';
+  cout << second::y << '\n';
+  return 0;
+}
 
 
 */
