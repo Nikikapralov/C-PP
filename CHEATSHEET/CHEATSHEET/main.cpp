@@ -874,6 +874,7 @@ Dynamic Binding works only with pointers and with objects at the Heap or with re
 Base class.
 So you will have to do Base *p = new Derived();
 Otherwise you will get static binding.
+If you are using smart pointer, you may need to do (*my_class)->attribute to access the attribute.
 
 Declare a function (method) as a virtual:
 
@@ -884,6 +885,7 @@ then all Derived classes inherit the virtual destructor and don't need to define
 Base destructor which may leave some memory leaks behind. It is also classified as undefined behaviour.
 
 Use reference functions to call methods of dynamically bounded classes or pointer functions.
+As a class, always use the Base class in the function! So reference to Base class!
 !!!ALWAYS WORK WITH REFERENCES/POINTERS WITH VIRTUAL FUNCTIONS AND DYNAMIC BINDING!!!
 void func (Account &account){
 	account.withdraw()
