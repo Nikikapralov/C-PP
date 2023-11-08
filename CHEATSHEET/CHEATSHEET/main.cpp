@@ -1196,8 +1196,59 @@ int main () {
 FILE I/O:
 https://www.geeksforgeeks.org/file-handling-c-classes/
 
-String Streams: 
+STRINGSTREAMS: 
 https://www.geeksforgeeks.org/stringstream-c-applications/
+
+LAMBDA EXPRESSIONS:
+https://builtin.com/software-engineering-perspectives/c-plus-plus-lambda
+
+Basically, lambda expressions are anonymous functions. Who knew, right?
+Well, some C++ background. Before Lambda expressions, people used to use functors, function objects.
+Those are classes with the () operator overloaded, so that when you call the class, you actually execute a function.
+
+MyClassFunctor(10) will call the operator() method of MyClassFunctor which if it does value * 10, we will get 100 as a result.
+Well Lambdas compile to such classes under the hood.
+
+[](int value_1, int value_2) - return type{
+	function logic.
+};
+
+Thats it.
+
+STATELESS LAMBDAS - Stateless lambdas have no knowledge of any arguements that have not been passed to them. They have no idea of what is outside of their scope.
+The lambda above is a stateless lambda.
+
+STATEFULL LAMBDAS - Statefull lambdas have knowledge of arguements that have not been passed to them, but that have been marked to them in their scope.
+That happens the following way:
+int x {10}
+
+[x](int value_1) -> return type {
+	have access to x but by value, meaning that is a copy of X and changing it works only inside the lambda, no changes are noted outside.
+}
+
+[this] - will capture by reference all the values in the class if the lambda is defined inside a class. In a class, always use this since values are captured
+by reference regardless. [=] will capture by reference.
+[&] - will capture by reference all the values in the scope of the lambda.
+[=] - will capture by value (copy) all the values in the scope of the lambda.
+
+How do those scope values work? Well they are simply this.value parameters in the creater Functor Class!
+What this means is that [x](){}; will capture X the first time, and each time the lambda is called, it will use the already captured [x].
+
+For example:
+x = 100
+auto my_lambda = [x](){ return x + 100}
+
+first call will return 200 (100 + 100)
+second call will return 200 (200 + 100) since the captured X is left out in a closure from the previous use as a class value element.
+MyClass {
+	int x = 100 (first call - 200, second call - 300 etc) The state is kept here and is not redeclared.
+}
+
+Passing functions as function arguments:
+Pointers, std::function or lambdas: https://www.geeksforgeeks.org/passing-a-function-as-a-parameter-in-cpp/
+Alternatively, you can just use auto.
+auto my_function = auto function(auto func){ return func()};
+
 
 
 */
