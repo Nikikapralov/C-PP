@@ -833,7 +833,7 @@ the base constructor in Base will be called unless otherwise specified.
 
 For example with initialisation lists:
 
-Derived::Derived(int value) : Base{x}, value_double{value * 2} {};
+Derived::Derived(int value, int x) : Base{x}, value_double{value * 2} {}; (value_double is a value defined in derived, the x is defined in Base class.)
 
 This will now call the Base{x} constructor.
 
