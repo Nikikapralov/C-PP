@@ -974,6 +974,8 @@ WEAK_POINTER: HEAP
 weak_ptr - does not OWN the object.
 Is always created from shared pointers but does not increment the reference counter.
 They prevent circular reference that ultimately prevents HEAP deallocation.
+To use a weak pointer, promote it to a shared pointer and check if its null.
+Follow: https://stackoverflow.com/questions/67977119/how-to-access-the-class-member-functions-from-a-weak-pointer-in-c
 
 A (b) <---> B(a)
 A has a shared pointer to B and B has a shared pointer to A.
