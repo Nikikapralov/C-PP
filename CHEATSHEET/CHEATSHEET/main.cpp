@@ -1254,5 +1254,7 @@ Alternatively, you can just use auto.
 auto my_function = auto function(auto func){ return func()};
 
 
+C++ CONCURRENCY IN ACTION: 
+In this huge chapter to follow, I will sum up my experience with C++ threading and concurrency, over the CPU. 
 
 */
