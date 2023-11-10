@@ -1257,4 +1257,43 @@ auto my_function = auto function(auto func){ return func()};
 C++ CONCURRENCY IN ACTION: 
 In this huge chapter to follow, I will sum up my experience with C++ threading and concurrency, over the CPU. 
 
+C++ is provides enough functionality for thread concurrency as opposed to process concurrency. As such, it will be
+more beneficial to use threads than processes in C++.
+
+threads - https://en.cppreference.com/w/cpp/thread/thread/thread#:~:text=The%20arguments%20to%20the%20thread,std%3A%3Aterminate%20is%20called.
+
+#include<thread>
+std::thread new_thread(function_to_be_executed_from_thread) - this will launch the thread.
+or
+std::thread new_thread{function()} - this will also return a variable
+
+After starting of a new thread, you have to either detach it (daemon) or join it (wait for it to finish) before the std::thread object is destroyed.
+Once that happens, if no join or detach, your program will terminate.
+
+You can also create a Functor called background and have the thread launch when the () operator is called.
+
+    std::thread t1; // t1 is not a thread
+    std::thread t2(f1, n + 1); // pass by value
+    std::thread t3(f2, std::ref(n)); // pass by reference
+    std::thread t4(std::move(t3)); // t4 is now running f2(). t3 is no longer a thread
+    std::thread t5(&foo::bar, &f); // t5 runs foo::bar() on object f
+    std::thread t6(b); // t6 runs baz::operator() on a copy of object b
+
+std::this_thread - https://cplusplus.com/reference/thread/this_thread/ Returns the thread_id and some provides some useful methods like sleep_for.
+
+get_id	Get thread id (function)
+yield	Yield to other threads (function) - https://stackoverflow.com/questions/11048946/stdthis-threadyield-vs-stdthis-threadsleep-for
+sleep_until	Sleep until time point (function)
+sleep_for	Sleep for time span (function)
+
+yield - will reschedule thread execution allowing others threads to get work done.
+
+std::thread.join() will join a thread and wait for it to complete before it moves on with the code.
+Important to use join and wait for threads to finish since going out of scope will destroy scoped variables, that if passed to the threads, 
+will result in access to a destroyed variable which is undefined behaviour. You can subvert this by either joining the threads or not passing data by reference/pointer
+but copying the value.
+
+
+
+
 */
