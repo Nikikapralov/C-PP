@@ -1293,7 +1293,30 @@ Important to use join and wait for threads to finish since going out of scope wi
 will result in access to a destroyed variable which is undefined behaviour. You can subvert this by either joining the threads or not passing data by reference/pointer
 but copying the value.
 
+If you start a thread but it raises an error before you envoke join/detach, your program will return. Use a try/catch block for that and in catch - join/detach
+as desired.
 
+Alternatively, consider implementing a thread_guard.
+
+class thread_guard
+{
+ std::thread& t;
+public:
+ explicit thread_guard(std::thread& t_):
+ t(t_)
+ {}
+ ~thread_guard()
+ {
+ if(t.joinable()) 
+ {
+ t.join(); 
+ }
+ }
+ thread_guard(thread_guard const&)=delete; - will not be automatically provided by the compiler - dangerous because it could outlive the scope that way.
+ thread_guard& operator=(thread_guard const&)=delete;
+};
+
+When cleanup is made, if an object is joinable, it will be joined.
 
 
 */
