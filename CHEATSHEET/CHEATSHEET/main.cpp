@@ -1293,6 +1293,8 @@ Important to use join and wait for threads to finish since going out of scope wi
 will result in access to a destroyed variable which is undefined behaviour. You can subvert this by either joining the threads or not passing data by reference/pointer
 but copying the value.
 
+std::thread.detach() - create a daemon thread - used for threads that live for the whole application.
+
 If you start a thread but it raises an error before you envoke join/detach, your program will return. Use a try/catch block for that and in catch - join/detach
 as desired.
 
