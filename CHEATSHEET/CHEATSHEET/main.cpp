@@ -1393,6 +1393,12 @@ In short though, the simpler, the better. Partition the data or use a delegator 
 In this day and age, where memory is so cheap (rage if you want, it's facts), it's better to keep it simple, working and safe, without many obscure bugs
 at the expense of another stick of RAM or two. Some cases don't allow this of course, but generally, go for simplicity unless otherwise required.
 
+if(&lhs==&rhs) 
+ return;
+ std::unique_lock<std::mutex> lock_a(lhs.m,std::defer_lock); - create the lock but do not take it yet
+ std::unique_lock<std::mutex> lock_b(rhs.m,std::defer_lock); 
+ std::lock(lock_a,lock_b);  - lock both until they are out of scope and are destroyed
+
 THREAD SAFE CONTAINERS: It is generally better to accept that std::containers are NOT thread safe!
 Let us take into consideration the implementation of a thread safe stack.
 What are the problems with a thread safe stack? Well calls to size and empty may return one value, but right after
