@@ -1320,5 +1320,83 @@ public:
 
 When cleanup is made, if an object is joinable, it will be joined.
 
+You can use a scoped thread to not need to create a specific variable for the parameter.
+
+class scoped_thread
+{
+ std::thread t;
+public:
+ explicit scoped_thread(std::thread t_): 
+ t(std::move(t_))
+ {
+ if(!t.joinable()) 
+ throw std::logic_error(“No thread”);
+ }
+ ~scoped_thread()
+ {
+ t.join(); 
+ }
+ scoped_thread(scoped_thread const&)=delete;
+ scoped_thread& operator=(scoped_thread const&)=delete;
+};
+struct func; 
+void f()
+{
+ int some_local_state;
+ scoped_thread t(std::thread(func(some_local_state))); 
+ do_something_in_current_thread();
+} 
+
+The new thread is passed in directly
+to the scoped_thread, rather than having to create a separate named variable for it.
+
+std::thread::hardware_concurrency() will allow us to choose the amount of threads on runtime.
+
+LOCKS: You can lock and unlock access to data by threads.
+#include<mutex>
+
+std::mutex m;
+std::lock_guard<std::mutex> lock(m) - implements the RAII idiom so that on creation the lock is taken and on destruction - freed.
+
+VERY IMPORTANT! - if you pass a reference or a pointer to protected data, then this reference/pointer can then be assigned to a global variable
+outside of the function scope, outliving the lock_guard. That will result in data being available for unprotected access without the user having to take
+the lock! Remember, locks do not lock anything if they are not used!
+
+Don’t pass pointers and references to protected data outside the scope of the lock, whether by
+returning them from a function, storing them in externally visible memory, or passing them as
+arguments to user-supplied functions.
+
+Generally, if you take the locks in order, you will never deadlock, since just one thread can move on and try to take the next lock after the first.
+This is also the solution to the Dining Philosophers problem that you always forget. The philosphers are split in groups of 2 and both go for the same fork.
+Whoever gets the first fork, also can go for the second fork. The other phisopher has to wait. 
+
+THREAD SAFE CONTAINERS: It is generally better to accept that std::containers are NOT thread safe!
+Let us take into consideration the implementation of a thread safe stack.
+What are the problems with a thread safe stack? Well calls to size and empty may return one value, but right after
+another thread can push/pop an item before the previous thread has started its execution on the branch with emoty items. That will ultimately result
+in logic for an empty stack being called (thread terminate) when the stack was actually not empty! This is a race condition.
+What can also happen? Well we can check size, see that there is an item and then get the item with top(), but before us, another thread has popped it.
+Well now top() will return undefined behaviour. We can streamline the interface, fuse empty(), top() and pop() functionality in one fuction,
+but we are still not out of the water. What if we call pop so we remove the element, but when trying to return it, we encounter a low memory error
+and that element cannot be copied? As a result, it will be lost forever and never actually processed. We can rectify this by implementing it like a transaction.
+If the return fails, append the element on the stack. The problem is, the element may not be on the correct position anymore, which, for a stack, is very important!
+What we can do is 3 things.
+1. See that pop_fused() does not return a copy, thereby using extra memory, but before the call to pop, a variable with enough space is declared so that we know
+there cannot be any out of memory errors when pop() assigns the item to that variable by reference. The problem is, a lot of user defined variables do not support
+an assignment constructor. Also we need to know the exact type that we will pop beforehand, which is hard.
+
+2. Make sure that copy and move cannot return any errors! 
+
+3. Return a pointer to the element that was popped - pointers can be copied without errors, but the act of managing a pointer can mean more performance overhaed for
+simple data types, like integers, booleans and so forth. 
+
+To create a thread safe container, we would implement both 1 and 2 or 1 and 3 so that we would not receive memory errors. 
+
+A general rule of thumb, when possible, do not let multiple threads access the same data container. Either partition data in multiple containers,
+use some clever math, idexes and iterators to partition one container (memory constraints) of have a Thread Delegator that alone can access the data container and 
+subsequently assign jobs to working threads.
+
+Alternatively, consider lock free implementations as their methods provide thread safety on non thread safe containers. (Copy, brain split, etc)
+
 
 */
