@@ -1427,5 +1427,37 @@ subsequently assign jobs to working threads.
 
 Alternatively, consider lock free implementations as their methods provide thread safety on non thread safe containers. (Copy, brain split, etc)
 
+DO NOT USE THE DOUBLE CHECKED PATTERN! IT STILL ALLOWS FOR RACE CONDITIONS SINCE IT DOESN'T LOCK THE CREATION OF THE OBJECT!
+Instead use:
+std::once_flag resource_flag; 
+std::call_once(resource_flag, function_to_be_called_once); 
+
+When would you use the one above? For example when you want to create just one connection to a database from threads, and if already created, just reuse it.
+
+(Still, go for the simple implementations. Why initialise the connection in some arbitrary thread? Do it at the main thread if acceptable!)
+
+When initialising a class with static members (class variables) there is a race condition on which thread will initialise and set the static variable first.
+(It has the same value for all instances). As of C++ 11, this race condition has been solved and static members are initialised exactly once.
+
+Readers Writers Problem - All readers are allowed to read, but as soon as a writer requests access, old readers finish reading, new readers must wait for writer
+to finish writing before receiving access themselves. C++ approach.
+
+In Python, we solved this problem by having a service lock, that has to be acquired for a very small amount of time by either the readers or the writers.
+Whoever has the service lock then will ultimately have access to the data ensuring fairness.
+
+The proposed approach in C++ is more akin to writers preference. 
+
+boost::shared_mutex - a shared mutex from the boost library. Can have shared_locks and normal one lock.
+boost::shared_lock<boost::shared_mutex> - acquire a shared lock.
+
+When 3 readers acquire 3 shared locks, and then a writer acquires the unique lock with lock_guards/unique_lock, the shared_locks count must all be released
+before the unique_lock is taken. Subsequently, if a unique_lock is taken, it must be released before any shared_locks are taken.
+
+I personally disagree with this approach and believe it will lead to readers/writers preference, which as discussed above, is not desirable. We need to aim
+for fairness when designing our algorithms. Use the service lock approach.
+
+Recursive locks also exist, but please don't use them. Just design better algorithms. Overall - This is all too and unneccessarily complicated. Just go
+the simple and effective approach.
+
 
 */
