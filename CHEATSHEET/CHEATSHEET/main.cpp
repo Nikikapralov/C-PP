@@ -1370,6 +1370,29 @@ Generally, if you take the locks in order, you will never deadlock, since just o
 This is also the solution to the Dining Philosophers problem that you always forget. The philosphers are split in groups of 2 and both go for the same fork.
 Whoever gets the first fork, also can go for the second fork. The other phisopher has to wait. 
 
+What happens though, if we have an instance when A then B and then another thread does the same but with the arguements reversed, B then A? We will deadlock.
+As such, the C++ std libraries provide the std::lock function that assures that either both locks are taken, or none.
+
+ if(&lhs==&rhs)
+ return; - make sure that left side and right side are different instances, since attempting to take a lock that you already hold is undefined behaviour.
+std::lock(lhs.m,rhs.m);  - lock either both or none.
+Then use a lock_guard to not need to lock/unlock manually but use RAII.
+std::lock_guard<std::mutex> lock_a(lhs.m,std::adopt_lock); - adopt_lock will just tell the lock_guard to adopt the lock and not lock it againt.
+std::lock_guard<std::mutex> lock_b(rhs.m,std::adopt_lock);
+The 2 locks are now being managed by the lock_guards.
+
+LOCK GUIDELINES:
+1. Do not use nested locks! 
+2. If you must use nested locks, make sure that you always take them in a predefined order! For a list, that would be in one direction, starting from first
+element to last, without skipping elements.
+3. Use hierarchical locks. A hierarchical lock with a high number will lock for a high function, whereas a low number - low functions.
+If try to call a high function from a low lock, it will raise an error. 
+4. Do not call user passed functions at run time. Those functions can do anything, as such, they can take a lock and cause deadlock!
+
+In short though, the simpler, the better. Partition the data or use a delegator (detached daemon thread), then use the threads to do the work. Nothing more.
+In this day and age, where memory is so cheap (rage if you want, it's facts), it's better to keep it simple, working and safe, without many obscure bugs
+at the expense of another stick of RAM or two. Some cases don't allow this of course, but generally, go for simplicity unless otherwise required.
+
 THREAD SAFE CONTAINERS: It is generally better to accept that std::containers are NOT thread safe!
 Let us take into consideration the implementation of a thread safe stack.
 What are the problems with a thread safe stack? Well calls to size and empty may return one value, but right after
