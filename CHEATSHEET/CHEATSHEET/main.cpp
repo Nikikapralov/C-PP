@@ -1624,5 +1624,16 @@ there are absolute timeouts (wait untill exactly 15:00:00 today).
 .wait_for() - duration
 .wait_until() - absolute
 
+CLOCKS:
+some_clock::time_point std::chrono::system_clock::now() - give time now.
+
+std::ratio<1,25> - clock ticks 25 times per 1 seconds 
+std::ration<5,2> - 5 seconds, 2 ticks = 1 tick every 2.5 seconds.
+
+A steady clock is a clock that ticks at an uniform rate for the whole duration. System_clock is NOT a steady clock, which means
+that a call 1 and call 2 for now(), call 1 can return a later time then call 2 due drift adjustments.
+Steady clocks are important for future timeouts, use std::chrono::steady_clock::now()
+
+
 
 */
