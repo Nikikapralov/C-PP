@@ -1562,9 +1562,67 @@ For example, consider data connections. If each thread holds just 1 connection, 
 for all our new connections. As such, only one thread deals with the connections, while saving the requested data under an std::promise<T>
 and making it available to worker threads by its connection to a std::future<T> object. 
 
+std::promise.get_future() - returns the future object.
+std::promise.set_value() - sets the value of the future object.
+std::promise.set_excetion(std::current_exception() or std::copy_exception())  - sets the value as an exception that will be called on get()
+
+try
+{
+ some_promise.set_value(calculate_value());
+}
+catch(...)
+{
+ some_promise.set_exception(std::current_exception());
+}
+
+vs 
+
+some_promise.set_exception(std::copy_exception(std::logic_error("foo ")));
+
+Thread 1 gets the promise.
+Thread 2 gets the future.
+Thread 2 waits on the value of the future.
+
+Thread 1 sets the value of the future through set_value on the promise.
+Thread 2 gets the value from the future.
+
+If an exception is called at any time during the process, the exception will be saved in the Future object and will be called on the 
+call to future.get(). 
+
+Instances of std::shared_future that reference some asynchronous state are constructed from instances of std::future that reference that state. Since std::future
+objects don’t share ownership of the asynchronous state with any other object, the
+ownership must be transferred into the std::shared_future using std::move, leaving the std::future in an empty state, as if it was default constructed:
+std::promise<int> p;
+std::future<int> f(p.get_future());
+assert(f.valid()); 
+std::shared_future<int> sf(std::move(f));
+assert(!f.valid()); 
+assert(sf.valid());
+
+OR 
+
+std::promise<std::string> p;
+std::shared_future<std::string> sf(p.get_future()); - since move constructor on R values is supported.
 
 
+Dont use sf directly but instead copy the shared_future inside the thread.
+auto local_shared_future = sf; - do this inside each thread, and continue normally from there.
 
+std::future has a share() member function that creates a new std::shared_future and transfers ownership to it directly.
+This can save a lot of typing and makes code easier to change:
+std::promise< std::map< SomeIndexType, SomeDataType, SomeComparator,
+ SomeAllocator>::iterator> p;
+auto sf=p.get_future().share(); - Use this!
+
+Basically like make_shared() and make_unique()
+
+TIMEOUTS: 
+You can specify timeouts to all the futures that are awaiting.
+There are duration timeouts (wait 10 seconds) and
+there are absolute timeouts (wait untill exactly 15:00:00 today).
+
+.wait_for() - duration
+.wait_until() - absolute
 
 
 */
