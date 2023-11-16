@@ -10,6 +10,7 @@ Template <int N> - create structures at compile time. (maybe)
 Use emplace_back with vectors to create the object inside the vector without unnecessary copies and without moving. Will do an inplace construction.
 
 Poco library and JSON header file.
+Promise-cpp and Asio for promises and async.
 
 COMMENTS - /* *\
 IMPORTS - include<iostream>, include"my_personal_header"
@@ -1400,6 +1401,7 @@ if(&lhs==&rhs)
  std::lock(lock_a,lock_b);  - lock both until they are out of scope and are destroyed
 
 THREAD SAFE CONTAINERS: It is generally better to accept that std::containers are NOT thread safe!
+When creating thread safe containers, fuze the top() and pop() operations in one.
 Let us take into consideration the implementation of a thread safe stack.
 What are the problems with a thread safe stack? Well calls to size and empty may return one value, but right after
 another thread can push/pop an item before the previous thread has started its execution on the branch with emoty items. That will ultimately result
@@ -1410,6 +1412,7 @@ but we are still not out of the water. What if we call pop so we remove the elem
 and that element cannot be copied? As a result, it will be lost forever and never actually processed. We can rectify this by implementing it like a transaction.
 If the return fails, append the element on the stack. The problem is, the element may not be on the correct position anymore, which, for a stack, is very important!
 What we can do is 3 things.
+
 1. See that pop_fused() does not return a copy, thereby using extra memory, but before the call to pop, a variable with enough space is declared so that we know
 there cannot be any out of memory errors when pop() assigns the item to that variable by reference. The problem is, a lot of user defined variables do not support
 an assignment constructor. Also we need to know the exact type that we will pop beforehand, which is hard.
@@ -1504,6 +1507,63 @@ void data_processing_thread()
 
 DUE TO THE EXISTENCE OF SPURIOUS WAKEUP, DO NOT USE STATE MODIFYING CODE IN THE CONDITIONAL VAR PREDICATE! IT WILL BE EXECUTED ON SPURIOUS WAKEUP REGARDLESS
 OF A NOTIFICATION AND SUCH WAKEUPS ARE UNPREDICTABLE!
+
+A conditonal variable is good when a thread has to wait multiple times for a notification. If a one off notification is the expected behaviour, 
+then a Future is better situated for this purpose.
+
+FUTURES:
+#include<future>
+std::future<> - akin to unique_pointer - a one off future.
+std::shared_future<> - akin to shared_pointer - can be accessed by many threads.
+
+Futures have to be protected by mutexes when one is accessing them, should they be shared by threads.
+std::async - calls a function and returns a future. The result of the function will be saved by the future and be accessible by
+future.get().
+
+std::future<int> the_answer=std::async(find_the_answer_to_ltuae);
+the_answer.get()
+
+You can run futures in 3 modes:
+On the current thread when .get() or .wait() is invoked.
+On a new thread, asynchronously (no event loop, just another thread).
+Let the implementation choose. 
+
+auto f6=std::async(std::launch::async,Y(),1.2); 
+auto f7=std::async(std::launch::deferred,baz,std::ref(x)); 
+auto f8=std::async( 
+ std::launch::deferred | std::launch::async,
+ baz,std::ref(x));
+auto f9=std::async(baz,std::ref(x));
+
+Default is always implementation chooses.
+In my opinion, one should aim for the creation and usage of a new thread using std::launch::async.
+
+Packing tasks with specific futures is done with std::packaged_task<double(double)> task;
+This combines the task with the future and allows it to be ran in a different thread. Something like a convenient wrapper, so that you can pass
+specific tasks to specific threads. The task has to be ran by doing task().
+
+The future can then be accessed by doing task.get_future().
+This is for example a good way of encapsulating different functions and their parameters for a thread pool or having the results of different threads
+be made available to another thread directly. (Like in Python, you pass the futures into a Queue that is accessed by both threads.)
+(Really questioning the need of packaged tasks at this point, but I guess it allows of a Queue of a designated return type).
+
+In button Thread:
+In button thread initialise task and put it into Queue.
+Return the task from the function inside the thread.
+Have access to value from future here when work was done on Queue thread.
+
+In Queue doing work Thread:
+Basically, initialise an empty task.
+Then get a task from the task queue and "move" it to the empty task with std::move().
+Then deal with the task. - result will appear in button Thread when ready.c
+
+std::promise is used when interthread communication is required and a task cannot be expressed as a function call.
+For example, consider data connections. If each thread holds just 1 connection, then very soon we will run out of threads
+for all our new connections. As such, only one thread deals with the connections, while saving the requested data under an std::promise<T>
+and making it available to worker threads by its connection to a std::future<T> object. 
+
+
+
 
 
 
