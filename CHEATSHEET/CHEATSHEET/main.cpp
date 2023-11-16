@@ -1459,5 +1459,52 @@ for fairness when designing our algorithms. Use the service lock approach.
 Recursive locks also exist, but please don't use them. Just design better algorithms. Overall - This is all too and unneccessarily complicated. Just go
 the simple and effective approach.
 
+WAITING ON AN EVENT USING CONDITIONAL VARIABLES:
+Basically, in Python you just do Queue.get() and that will wait for the Event that an item is put inside the Queue, which will then be retrieved.
+Now that doesn't work in C++ unfortunately.
+Instead, you can use condition variables to set a condition. 
+Now you can WAIT on that condition and when other threads call NOTIFY (when an item is put inside the queue), your thread will resume and continue its work.
+Cool right? Well, there are some small things we have to discuss first. 
+First of all, the condition has to be under a lock. A single lock for all processes that try it.
+What happens is the following: On notify/spurious wakeup (yes threads can wake up on their own without a notify) -> check condition predicate -> if true work, 
+otherwise block the thread again.
+While the thread is blocked, the lock of the condition is released.
+The lock scheme looks like this:
+Lock - check condition - Unlock -> this requires a unique_lock since one must be able to lock and unlock it, something that is not true for lock_guards.
+
+std::condition_variable data_cond;
+std::mutex mut;
+.notify_one() - will notify one thread.
+.notify_a() - will notify all threads.
+void data_preparation_thread()
+{
+ while(more_data_to_prepare())
+ {
+ data_chunk const data=prepare_data(); 
+ std::lock_guard<std::mutex> lk(mut); - lock the access to the queue untill the function has completed
+ data_queue.push(data); - push data to queue
+ data_cond.notify_one(); - notify the threads to wake up
+ }
+}
+void data_processing_thread()
+{
+ while(true)
+ {
+ std::unique_lock<std::mutex> lk(mut); - unique lock for locking and unlocking 
+ data_cond.wait( 
+ lk,[]{return !data_queue.empty();}); - wait with a predicate, checked while under a lock. 
+ data_chunk data=data_queue.front(); - get the data;
+ data_queue.pop(); - remove data from the queue.
+ lk.unlock(); - manually unlock the lock
+ process(data); 
+ if(is_last_chunk(data)) - poison pill - kill thread.
+ break;
+ }
+}
+
+DUE TO THE EXISTENCE OF SPURIOUS WAKEUP, DO NOT USE STATE MODIFYING CODE IN THE CONDITIONAL VAR PREDICATE! IT WILL BE EXECUTED ON SPURIOUS WAKEUP REGARDLESS
+OF A NOTIFICATION AND SUCH WAKEUPS ARE UNPREDICTABLE!
+
+
 
 */
