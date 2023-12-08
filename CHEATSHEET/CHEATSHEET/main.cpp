@@ -8,6 +8,7 @@ Use inline functions for one time functions to generate assembly code. Not good 
 Use constexpr do define items that can be evaluated at compile time and don't have to be computed at run time!
 Template <int N> - create structures at compile time. (maybe)
 Use emplace_back with vectors to create the object inside the vector without unnecessary copies and without moving. Will do an inplace construction.
+Use string_view when needing a read only string.
 
 Poco library and JSON header file.
 Promise-cpp and Asio for promises and async.
@@ -1203,6 +1204,10 @@ https://www.geeksforgeeks.org/file-handling-c-classes/
 
 STRINGSTREAMS: 
 https://www.geeksforgeeks.org/stringstream-c-applications/
+
+STRING_VIEWS: 
+Read only strings that provide a pointer to char array. More performant and can be used as constexpr.
+https://www.safetica.com/blog/do-you-know-std-string_view-and-how-to-use-it
 
 LAMBDA EXPRESSIONS:
 https://builtin.com/software-engineering-perspectives/c-plus-plus-lambda
