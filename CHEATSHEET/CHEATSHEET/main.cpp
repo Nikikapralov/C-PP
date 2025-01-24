@@ -8,8 +8,10 @@ Use inline functions for one time functions to generate assembly code. Not good 
 Use constexpr do define items that can be evaluated at compile time and don't have to be computed at run time!
 Template <int N> - create structures at compile time. (maybe)
 Use emplace_back with vectors to create the object inside the vector without unnecessary copies and without moving. Will do an inplace construction.
+Use string_view when needing a read only string.
 
 Poco library and JSON header file.
+Promise-cpp and Asio for promises and async.
 
 COMMENTS - /* *\
 IMPORTS - include<iostream>, include"my_personal_header"
@@ -1203,6 +1205,10 @@ https://www.geeksforgeeks.org/file-handling-c-classes/
 STRINGSTREAMS: 
 https://www.geeksforgeeks.org/stringstream-c-applications/
 
+STRING_VIEWS: 
+Read only strings that provide a pointer to char array. More performant and can be used as constexpr.
+https://www.safetica.com/blog/do-you-know-std-string_view-and-how-to-use-it
+
 LAMBDA EXPRESSIONS:
 https://builtin.com/software-engineering-perspectives/c-plus-plus-lambda
 
@@ -1319,6 +1325,320 @@ public:
 };
 
 When cleanup is made, if an object is joinable, it will be joined.
+
+You can use a scoped thread to not need to create a specific variable for the parameter.
+
+class scoped_thread
+{
+ std::thread t;
+public:
+ explicit scoped_thread(std::thread t_): 
+ t(std::move(t_))
+ {
+ if(!t.joinable()) 
+ throw std::logic_error(“No thread”);
+ }
+ ~scoped_thread()
+ {
+ t.join(); 
+ }
+ scoped_thread(scoped_thread const&)=delete;
+ scoped_thread& operator=(scoped_thread const&)=delete;
+};
+struct func; 
+void f()
+{
+ int some_local_state;
+ scoped_thread t(std::thread(func(some_local_state))); 
+ do_something_in_current_thread();
+} 
+
+The new thread is passed in directly
+to the scoped_thread, rather than having to create a separate named variable for it.
+
+std::thread::hardware_concurrency() will allow us to choose the amount of threads on runtime.
+
+LOCKS: You can lock and unlock access to data by threads.
+#include<mutex>
+
+std::mutex m;
+std::lock_guard<std::mutex> lock(m) - implements the RAII idiom so that on creation the lock is taken and on destruction - freed.
+
+VERY IMPORTANT! - if you pass a reference or a pointer to protected data, then this reference/pointer can then be assigned to a global variable
+outside of the function scope, outliving the lock_guard. That will result in data being available for unprotected access without the user having to take
+the lock! Remember, locks do not lock anything if they are not used!
+
+Don’t pass pointers and references to protected data outside the scope of the lock, whether by
+returning them from a function, storing them in externally visible memory, or passing them as
+arguments to user-supplied functions.
+
+Generally, if you take the locks in order, you will never deadlock, since just one thread can move on and try to take the next lock after the first.
+This is also the solution to the Dining Philosophers problem that you always forget. The philosphers are split in groups of 2 and both go for the same fork.
+Whoever gets the first fork, also can go for the second fork. The other phisopher has to wait. 
+
+What happens though, if we have an instance when A then B and then another thread does the same but with the arguements reversed, B then A? We will deadlock.
+As such, the C++ std libraries provide the std::lock function that assures that either both locks are taken, or none.
+
+ if(&lhs==&rhs)
+ return; - make sure that left side and right side are different instances, since attempting to take a lock that you already hold is undefined behaviour.
+std::lock(lhs.m,rhs.m);  - lock either both or none.
+Then use a lock_guard to not need to lock/unlock manually but use RAII.
+std::lock_guard<std::mutex> lock_a(lhs.m,std::adopt_lock); - adopt_lock will just tell the lock_guard to adopt the lock and not lock it againt.
+std::lock_guard<std::mutex> lock_b(rhs.m,std::adopt_lock);
+The 2 locks are now being managed by the lock_guards.
+
+LOCK GUIDELINES:
+1. Do not use nested locks! 
+2. If you must use nested locks, make sure that you always take them in a predefined order! For a list, that would be in one direction, starting from first
+element to last, without skipping elements.
+3. Use hierarchical locks. A hierarchical lock with a high number will lock for a high function, whereas a low number - low functions.
+If try to call a high function from a low lock, it will raise an error. 
+4. Do not call user passed functions at run time. Those functions can do anything, as such, they can take a lock and cause deadlock!
+
+In short though, the simpler, the better. Partition the data or use a delegator (detached daemon thread), then use the threads to do the work. Nothing more.
+In this day and age, where memory is so cheap (rage if you want, it's facts), it's better to keep it simple, working and safe, without many obscure bugs
+at the expense of another stick of RAM or two. Some cases don't allow this of course, but generally, go for simplicity unless otherwise required.
+
+if(&lhs==&rhs) 
+ return;
+ std::unique_lock<std::mutex> lock_a(lhs.m,std::defer_lock); - create the lock but do not take it yet
+ std::unique_lock<std::mutex> lock_b(rhs.m,std::defer_lock); 
+ std::lock(lock_a,lock_b);  - lock both until they are out of scope and are destroyed
+
+THREAD SAFE CONTAINERS: It is generally better to accept that std::containers are NOT thread safe!
+When creating thread safe containers, fuze the top() and pop() operations in one.
+Let us take into consideration the implementation of a thread safe stack.
+What are the problems with a thread safe stack? Well calls to size and empty may return one value, but right after
+another thread can push/pop an item before the previous thread has started its execution on the branch with emoty items. That will ultimately result
+in logic for an empty stack being called (thread terminate) when the stack was actually not empty! This is a race condition.
+What can also happen? Well we can check size, see that there is an item and then get the item with top(), but before us, another thread has popped it.
+Well now top() will return undefined behaviour. We can streamline the interface, fuse empty(), top() and pop() functionality in one fuction,
+but we are still not out of the water. What if we call pop so we remove the element, but when trying to return it, we encounter a low memory error
+and that element cannot be copied? As a result, it will be lost forever and never actually processed. We can rectify this by implementing it like a transaction.
+If the return fails, append the element on the stack. The problem is, the element may not be on the correct position anymore, which, for a stack, is very important!
+What we can do is 3 things.
+
+1. See that pop_fused() does not return a copy, thereby using extra memory, but before the call to pop, a variable with enough space is declared so that we know
+there cannot be any out of memory errors when pop() assigns the item to that variable by reference. The problem is, a lot of user defined variables do not support
+an assignment constructor. Also we need to know the exact type that we will pop beforehand, which is hard.
+
+2. Make sure that copy and move cannot return any errors! 
+
+3. Return a pointer to the element that was popped - pointers can be copied without errors, but the act of managing a pointer can mean more performance overhaed for
+simple data types, like integers, booleans and so forth. 
+
+To create a thread safe container, we would implement both 1 and 2 or 1 and 3 so that we would not receive memory errors. 
+
+A general rule of thumb, when possible, do not let multiple threads access the same data container. Either partition data in multiple containers,
+use some clever math, idexes and iterators to partition one container (memory constraints) of have a Thread Delegator that alone can access the data container and 
+subsequently assign jobs to working threads.
+
+Alternatively, consider lock free implementations as their methods provide thread safety on non thread safe containers. (Copy, brain split, etc)
+
+DO NOT USE THE DOUBLE CHECKED PATTERN! IT STILL ALLOWS FOR RACE CONDITIONS SINCE IT DOESN'T LOCK THE CREATION OF THE OBJECT!
+Instead use:
+std::once_flag resource_flag; 
+std::call_once(resource_flag, function_to_be_called_once); 
+
+When would you use the one above? For example when you want to create just one connection to a database from threads, and if already created, just reuse it.
+
+(Still, go for the simple implementations. Why initialise the connection in some arbitrary thread? Do it at the main thread if acceptable!)
+
+When initialising a class with static members (class variables) there is a race condition on which thread will initialise and set the static variable first.
+(It has the same value for all instances). As of C++ 11, this race condition has been solved and static members are initialised exactly once.
+
+Readers Writers Problem - All readers are allowed to read, but as soon as a writer requests access, old readers finish reading, new readers must wait for writer
+to finish writing before receiving access themselves. C++ approach.
+
+In Python, we solved this problem by having a service lock, that has to be acquired for a very small amount of time by either the readers or the writers.
+Whoever has the service lock then will ultimately have access to the data ensuring fairness.
+
+The proposed approach in C++ is more akin to writers preference. 
+
+boost::shared_mutex - a shared mutex from the boost library. Can have shared_locks and normal one lock.
+boost::shared_lock<boost::shared_mutex> - acquire a shared lock.
+
+When 3 readers acquire 3 shared locks, and then a writer acquires the unique lock with lock_guards/unique_lock, the shared_locks count must all be released
+before the unique_lock is taken. Subsequently, if a unique_lock is taken, it must be released before any shared_locks are taken.
+
+I personally disagree with this approach and believe it will lead to readers/writers preference, which as discussed above, is not desirable. We need to aim
+for fairness when designing our algorithms. Use the service lock approach.
+
+Recursive locks also exist, but please don't use them. Just design better algorithms. Overall - This is all too and unneccessarily complicated. Just go
+the simple and effective approach.
+
+WAITING ON AN EVENT USING CONDITIONAL VARIABLES:
+Basically, in Python you just do Queue.get() and that will wait for the Event that an item is put inside the Queue, which will then be retrieved.
+Now that doesn't work in C++ unfortunately.
+Instead, you can use condition variables to set a condition. 
+Now you can WAIT on that condition and when other threads call NOTIFY (when an item is put inside the queue), your thread will resume and continue its work.
+Cool right? Well, there are some small things we have to discuss first. 
+First of all, the condition has to be under a lock. A single lock for all processes that try it.
+What happens is the following: On notify/spurious wakeup (yes threads can wake up on their own without a notify) -> check condition predicate -> if true work, 
+otherwise block the thread again.
+While the thread is blocked, the lock of the condition is released.
+The lock scheme looks like this:
+Lock - check condition - Unlock -> this requires a unique_lock since one must be able to lock and unlock it, something that is not true for lock_guards.
+
+std::condition_variable data_cond;
+std::mutex mut;
+.notify_one() - will notify one thread.
+.notify_a() - will notify all threads.
+void data_preparation_thread()
+{
+ while(more_data_to_prepare())
+ {
+ data_chunk const data=prepare_data(); 
+ std::lock_guard<std::mutex> lk(mut); - lock the access to the queue untill the function has completed
+ data_queue.push(data); - push data to queue
+ data_cond.notify_one(); - notify the threads to wake up
+ }
+}
+void data_processing_thread()
+{
+ while(true)
+ {
+ std::unique_lock<std::mutex> lk(mut); - unique lock for locking and unlocking 
+ data_cond.wait( 
+ lk,[]{return !data_queue.empty();}); - wait with a predicate, checked while under a lock. 
+ data_chunk data=data_queue.front(); - get the data;
+ data_queue.pop(); - remove data from the queue.
+ lk.unlock(); - manually unlock the lock
+ process(data); 
+ if(is_last_chunk(data)) - poison pill - kill thread.
+ break;
+ }
+}
+
+DUE TO THE EXISTENCE OF SPURIOUS WAKEUP, DO NOT USE STATE MODIFYING CODE IN THE CONDITIONAL VAR PREDICATE! IT WILL BE EXECUTED ON SPURIOUS WAKEUP REGARDLESS
+OF A NOTIFICATION AND SUCH WAKEUPS ARE UNPREDICTABLE!
+
+A conditonal variable is good when a thread has to wait multiple times for a notification. If a one off notification is the expected behaviour, 
+then a Future is better situated for this purpose.
+
+FUTURES:
+#include<future>
+std::future<> - akin to unique_pointer - a one off future.
+std::shared_future<> - akin to shared_pointer - can be accessed by many threads.
+
+Futures have to be protected by mutexes when one is accessing them, should they be shared by threads.
+std::async - calls a function and returns a future. The result of the function will be saved by the future and be accessible by
+future.get().
+
+std::future<int> the_answer=std::async(find_the_answer_to_ltuae);
+the_answer.get()
+
+You can run futures in 3 modes:
+On the current thread when .get() or .wait() is invoked.
+On a new thread, asynchronously (no event loop, just another thread).
+Let the implementation choose. 
+
+auto f6=std::async(std::launch::async,Y(),1.2); 
+auto f7=std::async(std::launch::deferred,baz,std::ref(x)); 
+auto f8=std::async( 
+ std::launch::deferred | std::launch::async,
+ baz,std::ref(x));
+auto f9=std::async(baz,std::ref(x));
+
+Default is always implementation chooses.
+In my opinion, one should aim for the creation and usage of a new thread using std::launch::async.
+
+Packing tasks with specific futures is done with std::packaged_task<double(double)> task;
+This combines the task with the future and allows it to be ran in a different thread. Something like a convenient wrapper, so that you can pass
+specific tasks to specific threads. The task has to be ran by doing task().
+
+The future can then be accessed by doing task.get_future().
+This is for example a good way of encapsulating different functions and their parameters for a thread pool or having the results of different threads
+be made available to another thread directly. (Like in Python, you pass the futures into a Queue that is accessed by both threads.)
+(Really questioning the need of packaged tasks at this point, but I guess it allows of a Queue of a designated return type).
+
+In button Thread:
+In button thread initialise task and put it into Queue.
+Return the task from the function inside the thread.
+Have access to value from future here when work was done on Queue thread.
+
+In Queue doing work Thread:
+Basically, initialise an empty task.
+Then get a task from the task queue and "move" it to the empty task with std::move().
+Then deal with the task. - result will appear in button Thread when ready.c
+
+std::promise is used when interthread communication is required and a task cannot be expressed as a function call.
+For example, consider data connections. If each thread holds just 1 connection, then very soon we will run out of threads
+for all our new connections. As such, only one thread deals with the connections, while saving the requested data under an std::promise<T>
+and making it available to worker threads by its connection to a std::future<T> object. 
+
+std::promise.get_future() - returns the future object.
+std::promise.set_value() - sets the value of the future object.
+std::promise.set_excetion(std::current_exception() or std::copy_exception())  - sets the value as an exception that will be called on get()
+
+try
+{
+ some_promise.set_value(calculate_value());
+}
+catch(...)
+{
+ some_promise.set_exception(std::current_exception());
+}
+
+vs 
+
+some_promise.set_exception(std::copy_exception(std::logic_error("foo ")));
+
+Thread 1 gets the promise.
+Thread 2 gets the future.
+Thread 2 waits on the value of the future.
+
+Thread 1 sets the value of the future through set_value on the promise.
+Thread 2 gets the value from the future.
+
+If an exception is called at any time during the process, the exception will be saved in the Future object and will be called on the 
+call to future.get(). 
+
+Instances of std::shared_future that reference some asynchronous state are constructed from instances of std::future that reference that state. Since std::future
+objects don’t share ownership of the asynchronous state with any other object, the
+ownership must be transferred into the std::shared_future using std::move, leaving the std::future in an empty state, as if it was default constructed:
+std::promise<int> p;
+std::future<int> f(p.get_future());
+assert(f.valid()); 
+std::shared_future<int> sf(std::move(f));
+assert(!f.valid()); 
+assert(sf.valid());
+
+OR 
+
+std::promise<std::string> p;
+std::shared_future<std::string> sf(p.get_future()); - since move constructor on R values is supported.
+
+
+Dont use sf directly but instead copy the shared_future inside the thread.
+auto local_shared_future = sf; - do this inside each thread, and continue normally from there.
+
+std::future has a share() member function that creates a new std::shared_future and transfers ownership to it directly.
+This can save a lot of typing and makes code easier to change:
+std::promise< std::map< SomeIndexType, SomeDataType, SomeComparator,
+ SomeAllocator>::iterator> p;
+auto sf=p.get_future().share(); - Use this!
+
+Basically like make_shared() and make_unique()
+
+TIMEOUTS: 
+You can specify timeouts to all the futures that are awaiting.
+There are duration timeouts (wait 10 seconds) and
+there are absolute timeouts (wait untill exactly 15:00:00 today).
+
+.wait_for() - duration
+.wait_until() - absolute
+
+CLOCKS:
+some_clock::time_point std::chrono::system_clock::now() - give time now.
+
+std::ratio<1,25> - clock ticks 25 times per 1 seconds 
+std::ration<5,2> - 5 seconds, 2 ticks = 1 tick every 2.5 seconds.
+
+A steady clock is a clock that ticks at an uniform rate for the whole duration. System_clock is NOT a steady clock, which means
+that a call 1 and call 2 for now(), call 1 can return a later time then call 2 due drift adjustments.
+Steady clocks are important for future timeouts, use std::chrono::steady_clock::now()
+
 
 
 */
