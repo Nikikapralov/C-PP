@@ -4,7 +4,7 @@
 
 class CheckingAccount : public Account {
 	private:
-		double withdrawal_fee{ 1.50 };
+		static constexpr double withdrawal_fee{ 1.50 };
 	public:
 		CheckingAccount(std::string name, double balance) : Account{ name, balance } {};
 		virtual ~CheckingAccount() = default;

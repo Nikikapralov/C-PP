@@ -4,7 +4,7 @@
 
 class TrustAccount : public Savings_Account {
 	private:
-		int allowed_withdrawals{ 0 };
+		static constexpr int allowed_withdrawals{ 0 };
 	public:
 		TrustAccount(std::string name, double balance, double interest_rate) : Savings_Account{ name, balance, interest_rate } {};
 		virtual ~TrustAccount() {};

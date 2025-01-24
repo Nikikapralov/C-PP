@@ -38,3 +38,29 @@
 *.filters
 *.user
 *.vs
+
+# Ignore all build directories commonly used by CMake
+build/
+cmake-build-*/
+
+# Ignore generated files by CMake
+CMakeFiles/
+CMakeCache.txt
+cmake_install.cmake
+Makefile
+
+# Ignore compiled object files
+*.o
+*.obj
+*.so
+*.dll
+*.exe
+*.out
+
+# Ignore logs and temporary files
+*.log
+*.tmp
+*.swp
+
+# Ignore backup files
+*~
