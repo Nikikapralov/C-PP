@@ -9,4 +9,5 @@ add_executable(Problems main.cpp
         26_Remove_duplicates_from_sorted_array/remove_duplicates_from_sorted_array.h
         167_Two_sum_two/two_sum_two.h
         15_three_sum/three_sum.h
-        27_Remove_element/remove_element.h)
+        27_Remove_element/remove_element.h
+        28_Index_of_first_occurence/index_of_first_occurence.h)

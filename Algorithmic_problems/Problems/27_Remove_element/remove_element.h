@@ -3,9 +3,10 @@
 #include <vector>
 #include <algorithm>
 #include <iostream>
+#include <span>
 
 
-int remove_element(std::vector<int>&& nums, int val) {
+int remove_element(std::span<int> nums, int val) {
     /*
     * Given an integer array nums and an integer val,
     * remove all occurrences of val in nums in-place.
